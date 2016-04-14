@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+    <title><%= title %></title>
+
+    <script src="/javascripts/jquery-1.12.2.min.js"></script>
+    <script src="/javascripts/jquery.form.js"></script>
+    <script src="/javascripts/bootstrap.min.js"></script>
+    <script src="/javascripts/jquery.timers-1.2.js"></script>
+    <script src="/javascripts/events.js"></script>
+
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/stylesheets/bootstrap.css'>
+
+    <style>
+    .search-text-div{
+      float: left;
+      width: 20%;
+    }
+    .search-select-div{
+      float: left;
+      width: 16%;
+    }
+    .search-btn-div{
+      float: left;
+      width: 12%;
+      text-align: right;
+    }
+
+    .batch-text-div{
+      float: left;
+      width: 22%;
+    }
+    .batch-btn-div{
+      float: left;
+      width: 12%;
+      text-align: right;
+    }
+    .panel{
+      margin-bottom: 5px;
+    }
+    .panel-heading{
+      padding: 5px;
+    }
+    .panel-body{
+      padding: 5px;
+    }
+
+    </style>
+
+  </head>
+  <body>
+    <div id="success-alert" class="alert alert-success" role="alert" style="display:none;position:fixed;top:1%;left:4%;width:92%">
+      设置模板信息成功!
+    </div>
+    <div id="failed-alert" class="alert alert-danger" role="alert" style="display:none;position:fixed;top:1%;left:4%;width:92%">
+      设置模板信息失败!
+    </div>
+
+    <h1><%= title %></h1>
+    <!-- <p>Welcome to <%= title %></p> -->
+       
+    <!-- 搜索表单 -->
+    <form id="fetchform" action="tempinfos" method="get">
+
+      <div class="panel panel-default">
+        <div class="panel-heading">搜索</div>
+        <div class="panel-body">
+          <div class="search-text-div">模板序号:<input type="number" name="tdx" value="<%= tdx%>" /></div>
+          <div class="search-text-div">模板名称:<input type="text" name="name" value="<%= name%>" /></div>
+          <input type="hidden" name="cat" id="category" value="<%= cat%>" >
+          <input type="hidden" name="asp" id="aspectRatio" value="<%= asp%>" >
+          <input type="hidden" name="sts" id="status" value="<%= sts%>">
+          <input type="hidden" name="page" id="page" value="1">
+
+          <!-- Single button -->
+          <div class="search-select-div">
+            模板分类:
+            <div class="btn-group btn-group-sm">
+              <% var catNameDic = {"0":"不限", "1":"成套模板", "2":"图示库模板", "3":"预设板式", "4":"万能板式"}%>
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="catBtn">
+                 <%= catNameDic[cat]%> <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <% for(var i = 0; i < 5; i ++) {%>
+                    <li><a href="javascript:selCat(<%= i%>)"><%= catNameDic[i]%></a></li>
+                <% }%>
+              </ul>
+            </div>
+          </div>
+          <div class="search-select-div">
+            模板比例:
+            <div class="btn-group btn-group-sm">
+              <% var aspNameDic = {"0":"不限", "1":"标准4:3", "2":"宽屏16:9", "3":"竖屏9:16"}%>
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="aspBtn">
+                 <%= aspNameDic[asp]%> <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <% for(var i = 0; i < 4; i ++) {%>
+                  <li><a href="javascript:selAsp(<%= i%>)"><%= aspNameDic[i]%></a></li>
+                <% }%>
+              </ul>
+            </div>
+          </div>
+          <div class="search-select-div">
+            模板状态:
+            <div class="btn-group btn-group-sm">
+              <% var stsNameDic = {"0":"不限", "1":"未审核", "2":"已审核"}%>
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="stsBtn">
+                 <%= stsNameDic[sts]%> <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <% for(var i = 0; i < 3; i ++) {%>
+                  <li><a href="javascript:selStatus(<%= i%>)"><%= stsNameDic[i]%></a></li>
+                <% }%>
+              </ul>
+            </div>
+          </div>
+          <div class="search-btn-div"><button type="submit" class="btn btn-default btn-sm
+              " >搜 &nbsp 索</button></div>
+        </div>
+      </div>
+    </form>
+  
+    <form id="batch-set-info-form" action="setinfos" method="post" onsubmit="return setInfoVerify(this)">
+      <div class="panel panel-default">
+        <div class="panel-heading">批量操作</div>
+        <div class="panel-body">
+          <input id="batch-form-tids" type="hidden" name="tids" value="" >
+          <input id="batch-form-author-changed" type="hidden" name="authorChanged" value=false>
+          <input id="batch-form-authorId-changed" type="hidden" name="authorIdChanged" value=false>
+          <input id="batch-form-price-changed" type="hidden" name="priceChanged" value=false>
+          <div class="batch-text-div">作者名称:<input id="batch-form-author" type="text" name="author" value="" placeholder="" ></div>
+          <div class="batch-text-div">作者id:<input id="batch-form-authorId" type="number" name="authorId" value="" placeholder="" ></div>
+          <div class="batch-text-div">模板价格:<input id="batch-form-price" type="number" name="price" value="0" placeholder="" ></div>
+          <div class="batch-text-div">是否审核:<input id="batch-form-status" type="checkbox" name="status" checked ></div>
+          <div class="batch-btn-div"><button type="submit" class="btn btn-default btn-sm
+              " >提 &nbsp 交</button></div>
+        </div>
+      </div>
+    </form>
+    <!-- 模板信息列表 -->
+    <table id="infotable" class='table table-bordered table-condensed'>
+    <tbody>
+    <tr>
+      <th><input id="all-choose-cb" type="checkbox"></th>
+      <th>模板id</th>
+      <th>模板名称</th>
+      <th>模板序号</th>
+      <th>模板分类</th>
+      <th>模板比例</th>
+      <th>作者名字</th>
+      <th>作者id</th>
+      <th>模板价格</th>
+      <th>是否已审核</th>
+      <th>操作</th>
+    </tr>
+    
+    <% for(var i = 0; i < rows.length; i ++) {%>
+      <tr>
+        <td><input class="choose-check" id="set_<%= rows[i].id%>_cb" type="checkbox"></td>
+        <td><%= rows[i].id%></td>
+        <td><%= rows[i].name%></td>
+        <td><%= rows[i].serialNo%></td>
+        <td><%= rows[i].category%></td>
+        <td><%= rows[i].aspectRatio%></td>
+        <!-- 设置提交表单 -->
+        <form class="form-inline" name="setform" action="/setinfo" method="post"  onsubmit="return setInfoVerify(this)">
+            <input type="hidden" id="set_<%= rows[i].id%>_tid" name="tid"  value=<%= rows[i].id%>>
+          <div class="form-group">
+            <td><input class="form-control input-sm author" id="set_<%= rows[i].id%>_author" type="text" name="author" value=<%= rows[i].author%>></td>
+            <td><input class="form-control input-sm authorId" id="set_<%= rows[i].id%>_authorId" type="text" name="authorId" value=<%= rows[i].authorId%>></td>
+            <td><input class="form-control input-sm price" id="set_<%= rows[i].id%>_price" type="number" name="price" value=<%= rows[i].price%>></td>
+            <% if (rows[i].status == "1") {%>
+              <td><input id="set_<%= rows[i].id%>_status" type="checkbox" name="status" checked></td>
+            <% } else {%>
+              <td><input id="set_<%= rows[i].id%>_status" type="checkbox" name="status"></td>
+            <% }%>
+            
+          </div>
+        <td><input type="submit" value="提交" class="btn btn-default btn-sm" ></td>
+        </form>
+      </tr>
+    <% } %>
+    
+    </tbody>
+  </table>
+  <!-- 分页按钮 -->
+  <nav>
+  <ul class="pagination"> 
+    <li><a href="javascript:prePage(<%= curPage%>)" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span></a>
+    </li>
+    
+    <% for(var i = firstPage; i <= lastPage; i ++) {%>
+      <% if(i == curPage) {%>
+        <li class="active"><a href="javascript:choosePage(<%= i%>)"><%= i%></a></li>
+      <% } else {%>
+        <li><a href="javascript:choosePage(<%= i%>)"><%= i%></a></li>
+      <% } %>
+    <% } %>
+    <li>
+      <a href="javascript:nextPage(<%= curPage%>, <%= totalPage%>)" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+  </body>
+
+</html>
